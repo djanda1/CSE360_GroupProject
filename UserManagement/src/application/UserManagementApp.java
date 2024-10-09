@@ -29,7 +29,67 @@ public class UserManagementApp extends Application {
 		showLoginPage(primaryStage);
 	}
 	
+	private void showAdminCreationPage(Stage stage, List<String> roles) {
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20, 20, 20, 20));
 
+		Label usernameLabel = new Label("Admin Username:");
+		TextField usernameInput = new TextField();
+
+		Label passwordLabel = new Label("Password:");
+		PasswordField passwordInput = new PasswordField();
+
+		Label confirmPasswordLabel = new Label("Confirm Password:");
+		PasswordField confirmPasswordInput = new PasswordField();
+
+		Button createAccountButton = new Button("Create Admin Account");
+		createAccountButton.setOnAction(e -> {
+			if (passwordInput.getText().equals(confirmPasswordInput.getText())) {
+				User newUser = new User(usernameInput.getText(), passwordInput.getText(), null, roles);
+				users.put(usernameInput.getText(), newUser);
+				showLoginPage(stage);
+			} else {
+				showAlert("Password Mismatch", "Passwords do not match.");
+			}
+		});
+
+		layout.getChildren().addAll(usernameLabel, usernameInput, passwordLabel, passwordInput, confirmPasswordLabel,
+				confirmPasswordInput, createAccountButton);
+		Scene scene = new Scene(layout, 300, 300);
+		stage.setScene(scene);
+	}
+
+	private void showAdminPage(Stage stage, String user) {
+		Button listUsers = new Button("List Users");
+		GridPane.setConstraints(listUsers, 1, 2);
+
+		Button deleteUsers = new Button("Delete a user");
+		GridPane.setConstraints(deleteUsers, 1, 3);
+		TextField deleteAccountInput = new TextField();
+		deleteAccountInput.setPromptText("Enter the email of the account desired to be deleted");
+		GridPane.setConstraints(deleteAccountInput, 1, 4);
+		deleteUsers.setOnAction(e -> {
+			String email = deleteAccountInput.getText();
+
+			if (!email.isEmpty()) {
+				deleteAccount(stage, email);
+			} else {
+				showAlert("Error", "Please enter an account email");
+			}
+		});
+
+	}
+
+	private void deleteAccount(Stage stage, String email) {
+		User user = users.get(email);
+		if (user != null) {
+			users.remove(email);
+			showAlert("Success", "Account has been deleted");
+		} else {
+			showAlert("Error", "This email does not exist, please enter a valid account email");
+		}
+	}
+	
 	private void showLoginPage(Stage stage) {
 		GridPane grid = new GridPane();
 		grid.setPadding(new Insets(10, 10, 10, 10));
