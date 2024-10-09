@@ -17,7 +17,7 @@ import java.util.*;
 public class UserManagementApp extends Application {
 	private Map<String, User> users = new HashMap<>();
 	private User currentUser;
-	public String oneTimePassword;
+	public String oneTimePassword, oneTimeStudent, oneTimeInstructor, oneTimeAdmin, oneTimeStudentIns;
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -29,7 +29,7 @@ public class UserManagementApp extends Application {
 		showLoginPage(primaryStage);
 	}
 	
-	private void showAdminCreationPage(Stage stage, List<String> roles) {
+	private void showAdminCreationPage(Stage stage, List<String> roles) {		//creating admin account
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
@@ -45,7 +45,7 @@ public class UserManagementApp extends Application {
 		Button createAccountButton = new Button("Create Admin Account");
 		createAccountButton.setOnAction(e -> {
 			if (passwordInput.getText().equals(confirmPasswordInput.getText())) {
-				User newUser = new User(usernameInput.getText(), passwordInput.getText(), null, roles);
+				User newUser = new User(usernameInput.getText(), passwordInput.getText(), roles);
 				users.put(usernameInput.getText(), newUser);
 				showLoginPage(stage);
 			} else {
@@ -59,15 +59,37 @@ public class UserManagementApp extends Application {
 		stage.setScene(scene);
 	}
 
-	private void showAdminPage(Stage stage, String user) {
+	private void showAdminPage(Stage stage, String user) {		//show admin main home page
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20,20,20,20));
+		
 		Button listUsers = new Button("List Users");
-		GridPane.setConstraints(listUsers, 1, 2);
-
 		Button deleteUsers = new Button("Delete a user");
-		GridPane.setConstraints(deleteUsers, 1, 3);
 		TextField deleteAccountInput = new TextField();
+		Button generatePasswordStudent = new Button("Generate one-time password for student");
+		Button generatePasswordInstructor = new Button("Generate one-time password for instructor");
+		Button generatePasswordAdmin = new Button("Generate one-time password for admin");
+		Button generatePasswordStuIns = new Button("Generate one-time password for student and instructor");
+		Button logout = new Button("Log Out");
+		logout.setOnAction(e -> showLoginPage(stage));
+		generatePasswordStudent.setOnAction(e -> {		//handle generating password for student
+			oneTimeStudent = generateRandomPassword(8);
+			System.out.print("Student's one-time password: " + oneTimeStudent + "\nThis password expired 12/10/2024\n");
+		});
+		generatePasswordInstructor.setOnAction(e -> {
+			oneTimeInstructor = generateRandomPassword(8);
+			System.out.print("Instructor's one-time password: " + oneTimeInstructor + "\nThis password expired 12/10/2024\n");
+		});
+		generatePasswordAdmin.setOnAction(e-> {
+			oneTimeAdmin = generateRandomPassword(8);
+			System.out.print("Admin's one-time password: " + oneTimeAdmin + "\nThis password expired 12/10/2024\n");
+		});
+		generatePasswordStuIns.setOnAction(e-> {
+			oneTimeStudentIns = generateRandomPassword(8);
+			System.out.print("One-time password for both student and instructor role: " + oneTimeInstructor + "\nThis password expired 12/10/2024\n");
+		});
+		
 		deleteAccountInput.setPromptText("Enter the email of the account desired to be deleted");
-		GridPane.setConstraints(deleteAccountInput, 1, 4);
 		deleteUsers.setOnAction(e -> {
 			String email = deleteAccountInput.getText();
 
@@ -77,10 +99,12 @@ public class UserManagementApp extends Application {
 				showAlert("Error", "Please enter an account email");
 			}
 		});
-
+		layout.getChildren().addAll(listUsers, deleteUsers, deleteAccountInput, generatePasswordStudent, generatePasswordInstructor, generatePasswordAdmin, generatePasswordStuIns, logout);
+		Scene scene = new Scene(layout, 500, 500);
+		stage.setScene(scene);
 	}
-
-	private void deleteAccount(Stage stage, String email) {
+	
+	private void deleteAccount(Stage stage, String email) {			//delete user from list method
 		User user = users.get(email);
 		if (user != null) {
 			users.remove(email);
@@ -89,8 +113,8 @@ public class UserManagementApp extends Application {
 			showAlert("Error", "This email does not exist, please enter a valid account email");
 		}
 	}
-	
-	private void showLoginPage(Stage stage) {
+
+	private void showLoginPage(Stage stage) {		//first page, will be login page with buttons to use one time password
 		GridPane grid = new GridPane();
 		grid.setPadding(new Insets(10, 10, 10, 10));
 		grid.setVgap(8);
@@ -140,7 +164,7 @@ public class UserManagementApp extends Application {
 	    return buffer.toString();
 	}
 	
-	private void handleLogin(Stage stage, String username, String password) {
+	private void handleLogin(Stage stage, String username, String password) {		//method to handle login attempt
 		User user = users.get(username);
 		if (users.size() == 0 && password.equals(oneTimePassword)) {
 			showAccountCreationPage(stage, List.of("Admin"));
@@ -161,35 +185,47 @@ public class UserManagementApp extends Application {
 		}
 	}
 
-	private void showInviteCodePage(Stage stage) {
+	private void showInviteCodePage(Stage stage) {		//scene to show invite code page
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
-
+		
+		Button goBack = new Button("Go Back");
+		goBack.setOnAction(e -> showLoginPage(stage));
+		
 		Label inviteCodeLabel = new Label("Enter Invite Code:");
 		TextField inviteCodeInput = new TextField();
 
 		Button submitButton = new Button("Submit");
 		submitButton.setOnAction(e -> handleInviteCode(stage, inviteCodeInput.getText()));
 
-		layout.getChildren().addAll(inviteCodeLabel, inviteCodeInput, submitButton);
+		layout.getChildren().addAll(inviteCodeLabel, inviteCodeInput, submitButton, goBack);
 		Scene scene = new Scene(layout, 300, 200);
 		stage.setScene(scene);
 	}
 	
 
-	private void handleInviteCode(Stage stage, String inviteCode) {
-		if (inviteCode.equals("admin-invite")) {
+	private void handleInviteCode(Stage stage, String inviteCode) {		//method to handle invite code
+		//oneTimePassword, oneTimeStudent, oneTimeInstructor, oneTimeAdmin, oneTimeStudentIns;
+		
+		if (inviteCode.equals(oneTimeAdmin) && !inviteCode.equals("")) {		//handles one time password for admin
 			showAccountCreationPage(stage, List.of("Admin"));
-		} else if (inviteCode.equals("student-invite")) {
+			oneTimeAdmin = "";													//remove the one time password
+		} else if (inviteCode.equals(oneTimeStudent) && !inviteCode.equals("")) {		//handles one time password for student
 			showAccountCreationPage(stage, List.of("Student"));
-		} else if (inviteCode.equals("instructor-invite")) {
+			oneTimeStudent = "";														//removes one time password for student
+		} else if (inviteCode.equals(oneTimeInstructor) && !inviteCode.equals("")) {
 			showAccountCreationPage(stage, List.of("Instructor"));
-		} else {
+			oneTimeInstructor = "";
+		} else if(inviteCode.equals(oneTimePassword) && !inviteCode.equals("")) {
+				showAccountCreationPage(stage, List.of("Admin"));
+				oneTimePassword = null;
+			}
+		 else {
 			showAlert("Invalid Code", "The invite code is invalid.");
 		}
 	}
 
-	private void showAccountCreationPage(Stage stage, List<String> roles) {
+	private void showAccountCreationPage(Stage stage, List<String> roles) {		//account user name and password creation
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
@@ -218,7 +254,7 @@ public class UserManagementApp extends Application {
 		stage.setScene(scene);
 	}
 
-	private void showAccountSetupPage(Stage stage) {
+	private void showAccountSetupPage(Stage stage) {		//account set up page
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
@@ -237,23 +273,26 @@ public class UserManagementApp extends Application {
 		Label emailLabel = new Label("Email:");
 		TextField emailInput = new TextField();
 
-		Button finishSetupButton = new Button("Finish Setup");
+		Button finishSetupButton = new Button("Finish Setup");		//once clicked with create new user with the text and set user to set up complete
 		finishSetupButton.setOnAction(e -> {
+			if(!firstNameInput.getText().equals("") && !middleNameInput.getText().equals("") && !lastNameInput.getText().equals("") && !emailInput.getText().equals("")) {	//check to see if required text fields are full
 			currentUser.setFirstName(firstNameInput.getText());
 			currentUser.setMiddleName(middleNameInput.getText());
 			currentUser.setLastName(lastNameInput.getText());
 			currentUser.setPreferredName(preferredNameInput.getText());
 			currentUser.setEmail(emailInput.getText());
 			currentUser.setSetupComplete(true);
-			showHomePage(stage, currentUser.getRoles().get(0));
+			showHomePage(stage, currentUser.getRoles().get(0));	
+		}
+			else
+				showAlert("Error", "Not all required fields have been filled");
 		});
-
 		layout.getChildren().addAll(firstNameLabel, firstNameInput, middleNameLabel, middleNameInput, lastNameLabel, lastNameInput, preferredNameLabel, preferredNameInput, emailLabel, emailInput, finishSetupButton);
 		Scene scene = new Scene(layout, 400, 400);
 		stage.setScene(scene);
 	}
 
-	private void showRoleSelectionPage(Stage stage) {
+	private void showRoleSelectionPage(Stage stage) {		//If user has multiple rows show page to see which one they want to use for this login session
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
@@ -262,14 +301,65 @@ public class UserManagementApp extends Application {
 		roleComboBox.getItems().addAll(currentUser.getRoles());
 
 		Button selectRoleButton = new Button("Select Role");
+		String thisRole = roleComboBox.getValue();
+		if(thisRole.equals("")) {
 		selectRoleButton.setOnAction(e -> showHomePage(stage, roleComboBox.getValue()));
-
+		}
 		layout.getChildren().addAll(roleLabel, roleComboBox, selectRoleButton);
 		Scene scene = new Scene(layout, 300, 200);
 		stage.setScene(scene);
 	}
 
-	private void showHomePage(Stage stage, String role) {
+	private void showHomePage(Stage stage, String role) {		//Original showHome page to be rerouted to the correct role
+		if(role.equals("Student"))
+		{
+			showHomePageStudent(stage, role);
+		}
+		else if (role.equals("Instructor"))
+		{
+			showHomePageInstructor(stage, role);
+		}
+		else if(role.equals("Admin"))
+			showAdminPage(stage, role);
+		else
+		{
+			showAlert("Error", "Could not find role");		//error message in case role could not be determined
+		}
+	}
+	
+	private void showHomePageAdmin(Stage stage, String role) {		//home page for instructor role
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20, 20, 20, 20));
+
+		Label welcomeLabel = new Label("Welcome, " + currentUser.getDisplayName() + " (" + role + ")");
+		Button logoutButton = new Button("Log Out");
+		logoutButton.setOnAction(e -> {
+			currentUser = null;
+			showLoginPage(stage);
+		});
+
+		layout.getChildren().addAll(welcomeLabel, logoutButton);
+		Scene scene = new Scene(layout, 300, 200);
+		stage.setScene(scene);
+	}
+	
+	private void showHomePageInstructor(Stage stage, String role) {		//home page for instructor role
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20, 20, 20, 20));
+
+		Label welcomeLabel = new Label("Welcome, " + currentUser.getDisplayName() + " (" + role + ")");
+		Button logoutButton = new Button("Log Out");
+		logoutButton.setOnAction(e -> {
+			currentUser = null;
+			showLoginPage(stage);
+		});
+
+		layout.getChildren().addAll(welcomeLabel, logoutButton);
+		Scene scene = new Scene(layout, 300, 200);
+		stage.setScene(scene);
+	}
+	
+	private void showHomePageStudent(Stage stage, String role) {		//role page for student role
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
@@ -285,7 +375,7 @@ public class UserManagementApp extends Application {
 		stage.setScene(scene);
 	}
 
-	private void showAlert(String title, String message) {
+	private void showAlert(String title, String message) {		//alert method to be able to let user know if any errors
 		Alert alert = new Alert(Alert.AlertType.INFORMATION);
 		alert.setTitle(title);
 		alert.setHeaderText(null);
@@ -294,7 +384,7 @@ public class UserManagementApp extends Application {
 	}
 
 
-	private static class User {
+	private static class User {			//user class
 		private String username;
 		private String password;
 		private List<String> roles;
@@ -305,51 +395,75 @@ public class UserManagementApp extends Application {
 		private String preferredName;
 		private String email;
 
-		public User(String username, String password, List<String> roles) {
+		public User(String username, String password, List<String> roles) {		//constructor for user class
 			this.username = username;
 			this.password = password;
 			this.roles = roles;
 			this.setupComplete = false;
 		}
 
-		public String getPassword() {
+		public String getPassword() {		//returns user password
 			return password;
 		}
 
-		public List<String> getRoles() {
+		public List<String> getRoles() {		//returns user list of roles
 			return roles;
 		}
 
-		public boolean isSetupComplete() {
+		public boolean isSetupComplete() {		//returns true if set up complete false if not
 			return setupComplete;
 		}
 
-		public void setSetupComplete(boolean setupComplete) {
+		public void setSetupComplete(boolean setupComplete) {		//method to set if set up has been completed
 			this.setupComplete = setupComplete;
 		}
 
-		public void setFirstName(String firstName) {
+		public void setFirstName(String firstName) {		//method to set first name
 			this.firstName = firstName;
 		}
 
-		public void setMiddleName(String middleName) {
+		public void setMiddleName(String middleName) {		//method to set middle name
 			this.middleName = middleName;
 		}
 
-		public void setLastName(String lastName) {
+		public void setLastName(String lastName) {		//method to set last name
 			this.lastName = lastName;
 		}
 
-		public void setPreferredName(String preferredName) {
+		public void setPreferredName(String preferredName) {		//method to set preferred name
 			this.preferredName = preferredName;
 		}
 
-		public void setEmail(String email) {
+		public void setEmail(String email) {		//method to set email
 			this.email = email;
 		}
-
-		public String getDisplayName() {
+		public String getFirstName()		//returns first name
+		{
+			return this.firstName;
+		}
+		public String getLastName()			//returns last name
+		{
+			return this.lastName;
+		}
+		public String getMiddleName()		//returns middle name
+		{
+			return this.middleName;
+		}
+		public String getEmail()		//returns email
+		{
+			return this.email;
+		}
+		public String getDisplayName() {		//method to display preferred name or default to first name
 			return preferredName != null && !preferredName.isEmpty() ? preferredName : firstName;
+		}
+		public String toString()		//display user
+		{
+			String userString = "First name +" + this.getFirstName() + "\n"
+					+ "Middle Name: " + this.getMiddleName() + "\n"
+					+ "Last Name: " + this.getLastName() + "\n"
+					+ "Email" + this.getEmail()
+					+ "Roles: " + roles;
+			return userString;
 		}
 	}
 }
