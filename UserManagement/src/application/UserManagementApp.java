@@ -205,7 +205,6 @@ public class UserManagementApp extends Application {
 	
 
 	private void handleInviteCode(Stage stage, String inviteCode) {		//method to handle invite code
-		//oneTimePassword, oneTimeStudent, oneTimeInstructor, oneTimeAdmin, oneTimeStudentIns;
 		
 		if (inviteCode.equals(oneTimeAdmin) && !inviteCode.equals("")) {		//handles one time password for admin
 			showAccountCreationPage(stage, List.of("Admin"));
