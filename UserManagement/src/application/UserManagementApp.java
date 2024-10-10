@@ -7,7 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.*;
 public class UserManagementApp extends Application {
 	private Map<String, User> users = new HashMap<>();
 	private User currentUser;
-	public String oneTimePassword, oneTimeStudent, oneTimeInstructor, oneTimeAdmin, oneTimeStudentIns;
+	public String oneTimePassword, oneTimeStudent, oneTimeInstructor, oneTimeAdmin, oneTimeStudentIns, oneTimeReset;
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -63,6 +63,10 @@ public class UserManagementApp extends Application {
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20,20,20,20));
 		
+		Button resetUser = new Button("Reset Users Account");
+		TextField resetUserInput = new TextField();
+		resetUserInput.setPromptText("Enter email for user you want to reset");
+		
 		Button listUsers = new Button("List Users");
 		Button deleteUsers = new Button("Delete a user");
 		TextField deleteAccountInput = new TextField();
@@ -71,26 +75,39 @@ public class UserManagementApp extends Application {
 		Button generatePasswordAdmin = new Button("Generate one-time password for admin");
 		Button generatePasswordStuIns = new Button("Generate one-time password for student and instructor");
 		Button logout = new Button("Log Out");
-		logout.setOnAction(e -> showLoginPage(stage));
-		generatePasswordStudent.setOnAction(e -> {		//handle generating password for student
+		
+		//button actions
+		resetUser.setOnAction(e -> {
+			String email = resetUserInput.getText();
+			if(!email.isEmpty())
+			{
+				oneTimeReset = generateRandomPassword(8);
+				System.out.print("Reset one-time password is: " + oneTimeReset + "\nThis password expires 12/31/2024");
+				resetUser(stage, email);
+			}
+			else
+				showAlert("Error", "Please enter the email you would like to reset");
+		});
+		logout.setOnAction(e -> showLoginPage(stage));		//handles logout
+		generatePasswordStudent.setOnAction(e -> {		//handle generating password
 			oneTimeStudent = generateRandomPassword(8);
-			System.out.print("Student's one-time password: " + oneTimeStudent + "\nThis password expired 12/10/2024\n");
+			System.out.print("Student's one-time password: " + oneTimeStudent + "\nThis password expires 12/31/2024\n");
 		});
 		generatePasswordInstructor.setOnAction(e -> {
 			oneTimeInstructor = generateRandomPassword(8);
-			System.out.print("Instructor's one-time password: " + oneTimeInstructor + "\nThis password expired 12/10/2024\n");
+			System.out.print("Instructor's one-time password: " + oneTimeInstructor + "\nThis password expires 12/31/2024\n");
 		});
 		generatePasswordAdmin.setOnAction(e-> {
 			oneTimeAdmin = generateRandomPassword(8);
-			System.out.print("Admin's one-time password: " + oneTimeAdmin + "\nThis password expired 12/10/2024\n");
+			System.out.print("Admin's one-time password: " + oneTimeAdmin + "\nThis password expires 12/31/2024\n");
 		});
 		generatePasswordStuIns.setOnAction(e-> {
 			oneTimeStudentIns = generateRandomPassword(8);
-			System.out.print("One-time password for both student and instructor role: " + oneTimeInstructor + "\nThis password expired 12/10/2024\n");
+			System.out.print("One-time password for both student and instructor role: " + oneTimeInstructor + "\nThis password expires 12/31/2024\n");
 		});
 		
 		deleteAccountInput.setPromptText("Enter the email of the account desired to be deleted");
-		deleteUsers.setOnAction(e -> {
+		deleteUsers.setOnAction(e -> {				//handles delete account button
 			String email = deleteAccountInput.getText();
 
 			if (!email.isEmpty()) {
@@ -99,7 +116,7 @@ public class UserManagementApp extends Application {
 				showAlert("Error", "Please enter an account email");
 			}
 		});
-		layout.getChildren().addAll(listUsers, deleteUsers, deleteAccountInput, generatePasswordStudent, generatePasswordInstructor, generatePasswordAdmin, generatePasswordStuIns, logout);
+		layout.getChildren().addAll(listUsers, deleteAccountInput, deleteUsers, resetUserInput, resetUser, generatePasswordStudent, generatePasswordInstructor, generatePasswordAdmin, generatePasswordStuIns, logout);
 		Scene scene = new Scene(layout, 500, 500);
 		stage.setScene(scene);
 	}
@@ -111,6 +128,19 @@ public class UserManagementApp extends Application {
 			showAlert("Success", "Account has been deleted");
 		} else {
 			showAlert("Error", "This email does not exist, please enter a valid account email");
+		}
+	}
+	private void resetUser(Stage stage, String email)		//resets users account
+	{
+		User user = users.get(email);
+		if(user != null)
+		{
+			user.setReset(true);
+			showAlert("Success", "Account has been reset");
+		}
+		else
+		{
+			showAlert("Error", "Email does not exist");
 		}
 	}
 
@@ -146,7 +176,7 @@ public class UserManagementApp extends Application {
 		if (users.size() == 0) {
 			oneTimePassword = generateRandomPassword(8);
 			System.out.println("Welcome Admin. One time password is : " + oneTimePassword + 
-					"\nThis password expires 12/10/2024");
+					"\nThis password expires 12/31/2024");
 		}
 	}
 	
@@ -164,6 +194,72 @@ public class UserManagementApp extends Application {
 	    return buffer.toString();
 	}
 	
+	private void handleResetPage(Stage stage, User user)		//page to reset account
+	{
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20,20,20,20));
+		
+		TextField oneTimeInput = new TextField();
+		Label prompt = new Label("Enter one-time password to reset account");
+		oneTimeInput.setPromptText("Enter one-time password to reset account");
+		Button enter = new Button("Enter");
+		enter.setOnAction(e -> {
+			LocalDateTime date = LocalDateTime.now();		//check if one time password has expired
+			int year = date.getYear();
+			if(year >= 2025)
+			{
+				showAlert("Error", "Password has expired!");
+			}
+			else {
+				String text = oneTimeInput.getText();
+				if(text.equals(oneTimeReset))			//check password
+				{
+					setNewPasswordPage(stage, user);
+					oneTimeReset = "";
+				}
+				else {
+					showAlert("Error", "Password does not match");
+				}
+			}
+		});
+		
+		layout.getChildren().addAll(prompt, oneTimeInput, enter);
+		Scene scene = new Scene(layout, 200, 200);
+		stage.setScene(scene);
+	}
+	
+	private void setNewPasswordPage(Stage stage, User user)		//set new password page
+	{
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20,20,20,20));
+		
+		//prompts for scene
+		Label label1 = new Label("Enter New Password");
+		Label label2 = new Label("Confirm Password");
+		TextField textfield = new TextField();
+		TextField textfield2 = new TextField();
+		textfield.setPromptText("New Password");
+		textfield2.setPromptText("New Password");
+		Button enter = new Button("Enter");
+		enter.setOnAction(e -> {
+			if(textfield.getText().equals(textfield2.getText()))
+			{
+				user.setPassword(textfield.getText());
+				user.setReset(false);
+				showLoginPage(stage);
+			}
+			else
+			{
+				showAlert("Error", "Passwords do not match");
+			}
+		});
+		
+		layout.getChildren().addAll(label1, textfield, label2, textfield2, enter);
+		Scene scene = new Scene(layout, 400,400);
+		stage.setScene(scene);
+		
+	}
+	
 	private void handleLogin(Stage stage, String username, String password) {		//method to handle login attempt
 		User user = users.get(username);
 		if (users.size() == 0 && password.equals(oneTimePassword)) {
@@ -172,7 +268,10 @@ public class UserManagementApp extends Application {
 		else {
 		if (user != null && user.getPassword().equals(password)) {
 			currentUser = user;
-			if (!user.isSetupComplete()) {
+			if(user.getReset()) {
+				handleResetPage(stage, user);
+			}
+			else if (!user.isSetupComplete()) {
 				showAccountSetupPage(stage);
 			} else if (user.getRoles().size() > 1) {
 				showRoleSelectionPage(stage);
@@ -205,6 +304,7 @@ public class UserManagementApp extends Application {
 	
 
 	private void handleInviteCode(Stage stage, String inviteCode) {		//method to handle invite code
+		//oneTimePassword, oneTimeStudent, oneTimeInstructor, oneTimeAdmin, oneTimeStudentIns;
 		
 		if (inviteCode.equals(oneTimeAdmin) && !inviteCode.equals("")) {		//handles one time password for admin
 			showAccountCreationPage(stage, List.of("Admin"));
@@ -326,22 +426,6 @@ public class UserManagementApp extends Application {
 		}
 	}
 	
-	private void showHomePageAdmin(Stage stage, String role) {		//home page for instructor role
-		VBox layout = new VBox(10);
-		layout.setPadding(new Insets(20, 20, 20, 20));
-
-		Label welcomeLabel = new Label("Welcome, " + currentUser.getDisplayName() + " (" + role + ")");
-		Button logoutButton = new Button("Log Out");
-		logoutButton.setOnAction(e -> {
-			currentUser = null;
-			showLoginPage(stage);
-		});
-
-		layout.getChildren().addAll(welcomeLabel, logoutButton);
-		Scene scene = new Scene(layout, 300, 200);
-		stage.setScene(scene);
-	}
-	
 	private void showHomePageInstructor(Stage stage, String role) {		//home page for instructor role
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
@@ -393,14 +477,20 @@ public class UserManagementApp extends Application {
 		private String lastName;
 		private String preferredName;
 		private String email;
+		private boolean reset;
 
 		public User(String username, String password, List<String> roles) {		//constructor for user class
 			this.username = username;
 			this.password = password;
 			this.roles = roles;
 			this.setupComplete = false;
+			this.reset = false;
 		}
 
+		public void setPassword(String password)
+		{
+			this.password = password;
+		}
 		public String getPassword() {		//returns user password
 			return password;
 		}
@@ -451,6 +541,14 @@ public class UserManagementApp extends Application {
 		public String getEmail()		//returns email
 		{
 			return this.email;
+		}
+		public void setReset(boolean resetState)
+		{
+			this.reset = resetState;
+		}
+		public boolean getReset()
+		{
+			return this.reset;
 		}
 		public String getDisplayName() {		//method to display preferred name or default to first name
 			return preferredName != null && !preferredName.isEmpty() ? preferredName : firstName;
