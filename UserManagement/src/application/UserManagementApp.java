@@ -7,8 +7,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,10 +71,10 @@ public class UserManagementApp extends Application {
 		Button listUsers = new Button("List Users");
 		Button deleteUsers = new Button("Delete a user");
 		TextField deleteAccountInput = new TextField();
-		Button generatePasswordStudent = new Button("Generate one-time password for student");
-		Button generatePasswordInstructor = new Button("Generate one-time password for instructor");
-		Button generatePasswordAdmin = new Button("Generate one-time password for admin");
-		Button generatePasswordStuIns = new Button("Generate one-time password for student and instructor");
+		Button generatePasswordStudent = new Button("Generate invite code for student");
+		Button generatePasswordInstructor = new Button("Generate invite code password for instructor");
+		Button generatePasswordAdmin = new Button("Generate invite code for admin");
+		Button generatePasswordStuIns = new Button("Generate invite code for student and instructor");
 		Button logout = new Button("Log Out");
 		
 		//button actions
@@ -91,37 +92,70 @@ public class UserManagementApp extends Application {
 		logout.setOnAction(e -> showLoginPage(stage));		//handles logout
 		generatePasswordStudent.setOnAction(e -> {		//handle generating password
 			oneTimeStudent = generateRandomPassword(8);
-			System.out.print("Student's one-time password: " + oneTimeStudent + "\nThis password expires 12/31/2024\n");
+			System.out.print("Student's invite code: " + oneTimeStudent + "\nThis code expires 12/31/2024\n");
 		});
 		generatePasswordInstructor.setOnAction(e -> {
 			oneTimeInstructor = generateRandomPassword(8);
-			System.out.print("Instructor's one-time password: " + oneTimeInstructor + "\nThis password expires 12/31/2024\n");
+			System.out.print("Instructor's invite code: " + oneTimeInstructor + "\nThis code expires 12/31/2024\n");
 		});
 		generatePasswordAdmin.setOnAction(e-> {
 			oneTimeAdmin = generateRandomPassword(8);
-			System.out.print("Admin's one-time password: " + oneTimeAdmin + "\nThis password expires 12/31/2024\n");
+			System.out.print("Admin's invite code: " + oneTimeAdmin + "\nThis code expires 12/31/2024\n");
 		});
 		generatePasswordStuIns.setOnAction(e-> {
 			oneTimeStudentIns = generateRandomPassword(8);
-			System.out.print("One-time password for both student and instructor role: " + oneTimeInstructor + "\nThis password expires 12/31/2024\n");
+			System.out.print("Invite code for both student and instructor role: " + oneTimeInstructor + "\nThis code expires 12/31/2024\n");
 		});
 		
-		deleteAccountInput.setPromptText("Enter the email of the account desired to be deleted");
-		deleteUsers.setOnAction(e -> {				//handles delete account button
-			String email = deleteAccountInput.getText();
-
-			if (!email.isEmpty()) {
-				deleteAccount(stage, email);
-			} else {
-				showAlert("Error", "Please enter an account email");
-			}
-		});
+		deleteAccountInput.setPromptText("Enter the username of the account desired to be deleted");
+		deleteUsers.setOnAction(e -> confirmDelete(stage,deleteAccountInput.getText(),user));	//Show the confirmation page
 		layout.getChildren().addAll(listUsers, deleteAccountInput, deleteUsers, resetUserInput, resetUser, generatePasswordStudent, generatePasswordInstructor, generatePasswordAdmin, generatePasswordStuIns, logout);
 		Scene scene = new Scene(layout, 500, 500);
 		stage.setScene(scene);
+		listUsers.setOnAction(e -> listUsers(stage));
 	}
 	
-	private void deleteAccount(Stage stage, String email) {			//delete user from list method
+	private void listUsers(Stage stage) {
+		ObservableList<User> userList = FXCollections.observableArrayList(users.values());
+		ListView<User> listview = new ListView<>(userList);
+		VBox layout = new VBox(10);
+		layout.setPadding(new Insets(20,20,20,20));
+		
+		layout.getChildren().addAll(listview);
+		Scene scene = new Scene(layout, 300, 200);
+		stage.setScene(scene);
+		stage.show();
+		
+	}
+	
+	private void confirmDelete(Stage stage, String email, String admin) {			//confirmation of deletion page
+		GridPane grid = new GridPane();
+		grid.setPadding(new Insets(10, 10, 10, 10));
+		grid.setVgap(8);
+		grid.setHgap(8);
+		
+		Label usernameLabel = new Label("Are you sure you would like to\ndelete this account?");
+		GridPane.setConstraints(usernameLabel, 0, 0);
+		
+		Button confirmDelete = new Button("Delete");
+		GridPane.setConstraints(confirmDelete, 0, 1);
+		confirmDelete.setOnAction(e -> {				//handles delete account button
+			if (!email.isEmpty()) {
+				deleteAccount(stage, email, admin);
+			} else {
+				showAlert("Error", "Please enter an account username");
+			}
+		});
+		
+		grid.getChildren().addAll(usernameLabel, confirmDelete);
+		
+		Scene scene = new Scene(grid, 300, 200);
+		stage.setScene(scene);
+		stage.show();
+		
+	}
+	
+	private void deleteAccount(Stage stage, String email, String admin) {			//delete user from list method
 		User user = users.get(email);
 		if (user != null) {
 			users.remove(email);
@@ -129,6 +163,7 @@ public class UserManagementApp extends Application {
 		} else {
 			showAlert("Error", "This email does not exist, please enter a valid account email");
 		}
+		showAdminPage(stage,admin);
 	}
 	private void resetUser(Stage stage, String email)		//resets users account
 	{
