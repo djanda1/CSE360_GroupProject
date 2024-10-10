@@ -58,6 +58,7 @@ public class UserManagementApp extends Application {
 				confirmPasswordInput, createAccountButton);
 		Scene scene = new Scene(layout, 300, 300);
 		stage.setScene(scene);
+		stage.setTitle("Admin Home Page");
 	}
 
 	private void showAdminPage(Stage stage, String user) {		//show admin main home page
@@ -66,7 +67,7 @@ public class UserManagementApp extends Application {
 		
 		Button resetUser = new Button("Reset Users Account");
 		TextField resetUserInput = new TextField();
-		resetUserInput.setPromptText("Enter email for user you want to reset");
+		resetUserInput.setPromptText("Enter username for user you want to reset");
 		
 		Button listUsers = new Button("List Users");
 		Button deleteUsers = new Button("Delete a user");
@@ -120,8 +121,9 @@ public class UserManagementApp extends Application {
 		ListView<User> listview = new ListView<>(userList);
 		VBox layout = new VBox(10);
 		layout.setPadding(new Insets(20,20,20,20));
-		
-		layout.getChildren().addAll(listview);
+		Button goBack = new Button("Go Back");
+		goBack.setOnAction(e ->showAdminPage(stage, "Admin"));
+		layout.getChildren().addAll(listview, goBack);
 		Scene scene = new Scene(layout, 300, 200);
 		stage.setScene(scene);
 		stage.show();
@@ -588,12 +590,17 @@ public class UserManagementApp extends Application {
 		public String getDisplayName() {		//method to display preferred name or default to first name
 			return preferredName != null && !preferredName.isEmpty() ? preferredName : firstName;
 		}
+		public String getUsername()
+		{
+			return this.username;
+		}
 		public String toString()		//display user
 		{
-			String userString = "First name +" + this.getFirstName() + "\n"
+			String userString = "Username: " + this.getUsername() + "\n"  
+					+ "First name: " + this.getFirstName() + "\n"
 					+ "Middle Name: " + this.getMiddleName() + "\n"
 					+ "Last Name: " + this.getLastName() + "\n"
-					+ "Email" + this.getEmail()
+					+ "Email: " + this.getEmail() + "\n"
 					+ "Roles: " + roles;
 			return userString;
 		}
